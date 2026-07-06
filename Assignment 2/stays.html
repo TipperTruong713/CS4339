@@ -16,15 +16,32 @@
 
   <div class="navbar">
     <a href="stays.html">Stays</a>
-    <a href="flights.html">Flights</a>
     <a href="cars.html">Cars</a>
     <a href="cruises.html">Cruises</a>
     <a href="book.html">Book</a>
     <a href="contact-us.html">Contact Us</a>
-    <a href="settings.html">Settings</a>
   </div>
 
   <div class="container">
+    <div class="side">
+      <h3>Settings</h3>
+      <label>Font size</label>
+      <select id="fontSizeSelect" onchange="changeFontSize(this.value)">
+        <option value="16">Normal</option>
+        <option value="14">Small</option>
+        <option value="20">Large</option>
+        <option value="24">Extra Large</option>
+      </select>
+
+      <label>Background color</label>
+      <select id="bgColorSelect" onchange="changeBgColor(this.value)">
+        <option value="#ffffff">White</option>
+        <option value="#f0f8ff">Light Blue</option>
+        <option value="#fff8e7">Cream</option>
+        <option value="#eaffea">Light Green</option>
+      </select>
+    </div>
+
     <div class="main">
       <h2>Find a Stay</h2>
 
@@ -71,10 +88,7 @@
 
     function isDateInRange(dateStr) {
       if (!dateStr) return false;
-      var d = new Date(dateStr);
-      var start = new Date("2024-09-01");
-      var end = new Date("2024-12-01");
-      return d >= start && d <= end;
+      return dateStr >= "2024-09-01" && dateStr <= "2024-12-01";
     }
 
     function searchStays() {

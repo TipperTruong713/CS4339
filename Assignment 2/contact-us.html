@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Deals - Contact Us</title>
+  <link rel="stylesheet" href="mystyle.css">
+  <script src="script.js"></script>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Travel Deals</h1>
+    <div id="datetime"></div>
+  </div>
+
+  <div class="navbar">
+    <a href="stays.html">Stays</a>
+    <a href="cars.html">Cars</a>
+    <a href="cruises.html">Cruises</a>
+    <a href="book.html">Book</a>
+    <a href="contact-us.html">Contact Us</a>
+  </div>
+
+  <div class="container">
+    <div class="side">
+      <h3>Settings</h3>
+      <label>Font size</label>
+      <select id="fontSizeSelect" onchange="changeFontSize(this.value)">
+        <option value="16">Normal</option>
+        <option value="14">Small</option>
+        <option value="20">Large</option>
+        <option value="24">Extra Large</option>
+      </select>
+
+      <label>Background color</label>
+      <select id="bgColorSelect" onchange="changeBgColor(this.value)">
+        <option value="#ffffff">White</option>
+        <option value="#f0f8ff">Light Blue</option>
+        <option value="#fff8e7">Cream</option>
+        <option value="#eaffea">Light Green</option>
+      </select>
+    </div>
+
+    <div class="main">
+      <h2>Contact Us</h2>
+
+      <label>First name</label>
+      <input type="text" id="firstName" placeholder="First name here">
+
+      <label>Last name</label>
+      <input type="text" id="lastName" placeholder="Last name here">
+
+      <label>Phone number</label>
+      <input type="tel" id="phone" placeholder="(123) 456-7890">
+
+      <label>Gender</label>
+      <div class="radio-line">
+        <input type="radio" name="gender" value="Female"> <label>Female</label>
+        <input type="radio" name="gender" value="Male"> <label>Male</label>
+        <input type="radio" name="gender" value="Other"> <label>Other</label>
+      </div>
+
+      <label>Email address</label>
+      <input type="email" id="email" placeholder="name@example.com">
+
+      <label>Comment</label>
+      <textarea id="comment" placeholder="Enter your comment"></textarea>
+
+      <button onclick="submitContact()">Submit</button>
+
+      <div class="result" id="result"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    &copy; Roshini Lidwin & Tipper Truong - CS 4339.0W1 Assignment #2
+  </div>
+
+  <script>
+    function getGender() {
+      var genders = document.getElementsByName("gender");
+      for (var i = 0; i < genders.length; i++) {
+        if (genders[i].checked) {
+          return genders[i].value;
+        }
+      }
+      return "";
+    }
+
+    function submitContact() {
+      var firstName = document.getElementById("firstName").value.trim();
+      var lastName = document.getElementById("lastName").value.trim();
+      var phone = document.getElementById("phone").value.trim();
+      var gender = getGender();
+      var email = document.getElementById("email").value.trim();
+      var comment = document.getElementById("comment").value.trim();
+
+      var namePattern = /^[A-Z][a-zA-Z]*$/;
+      var phonePattern = /^\(\d{3}\) \d{3}-\d{4}$/;
+      var emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+      if (!namePattern.test(firstName)) {
+        alert("First name must be alphabetic only and first letter must be capital.");
+        return;
+      }
+
+      if (!namePattern.test(lastName)) {
+        alert("Last name must be alphabetic only and first letter must be capital.");
+        return;
+      }
+
+      if (firstName.toLowerCase() === lastName.toLowerCase()) {
+        alert("First name and last name cannot be the same.");
+        return;
+      }
+
+      if (!phonePattern.test(phone)) {
+        alert("Phone number must be formatted as (123) 456-7890.");
+        return;
+      }
+
+      if (gender === "") {
+        alert("Please select gender.");
+        return;
+      }
+
+      if (!emailPattern.test(email)) {
+        alert("Email address must contain @ and .");
+        return;
+      }
+
+      if (comment.length < 10) {
+        alert("Comment must be at least 10 characters.");
+        return;
+      }
+
+      document.getElementById("result").style.display = "block";
+      document.getElementById("result").innerHTML =
+        "<strong>Contact Information Submitted</strong><br>" +
+        "First name: " + firstName + "<br>" +
+        "Last name: " + lastName + "<br>" +
+        "Phone: " + phone + "<br>" +
+        "Gender: " + gender + "<br>" +
+        "Email: " + email + "<br>" +
+        "Comment: " + comment;
+    }
+  </script>
+
+</body>
+</html>
