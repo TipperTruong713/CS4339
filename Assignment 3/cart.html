@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Deals - Cart</title>
+  <link rel="stylesheet" href="mystyle.css">
+  <script src="script.js"></script>
+  <style>
+    .cart-item {
+      border: 1px solid #bbb;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 12px auto;
+      max-width: 520px;
+      text-align: left;
+      background: #fafafa;
+    }
+    .cart-item h4 { margin: 0 0 6px; color: #14507f; }
+    .pax-row input { width: 120px; display: inline-block; margin: 2px; }
+    .booked { border-left: 5px solid #2e8b57; }
+    .totals { font-weight: bold; margin-top: 6px; }
+    .remove-btn { background: #b23; }
+    .remove-btn:hover { background: #911; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Travel Deals</h1>
+    <div id="datetime"></div>
+  </div>
+
+  <div class="navbar">
+    <a href="stays.html">Stays</a>
+    <a href="flights.html">Flights</a>
+    <a href="cars.html">Cars</a>
+    <a href="cruises.html">Cruises</a>
+    <a href="cart.html">Cart</a>
+    <a href="contact-us.html">Contact Us</a>
+  </div>
+
+  <div class="container">
+    <div class="side">
+      <h3>Settings</h3>
+      <label>Font size</label>
+      <select id="fontSizeSelect" onchange="changeFontSize(this.value)">
+        <option value="16">Normal</option>
+        <option value="14">Small</option>
+        <option value="20">Large</option>
+        <option value="24">Extra Large</option>
+      </select>
+
+      <label>Background color</label>
+      <select id="bgColorSelect" onchange="changeBgColor(this.value)">
+        <option value="#ffffff">White</option>
+        <option value="#f0f8ff">Light Blue</option>
+        <option value="#fff8e7">Cream</option>
+        <option value="#eaffea">Light Green</option>
+      </select>
+    </div>
+
+    <div class="main">
+      <h2>Your Cart</h2>
+      <div style="font-size:13px;">User ID: <span id="userId"></span></div>
+      <div id="cartArea"></div>
+
+      <h3 style="margin-top:24px;">Booked</h3>
+      <div id="bookedArea"></div>
+
+      <button onclick="downloadBookings()" style="margin-top:20px;">Download bookings.json</button>
+      <button onclick="clearAll()" class="remove-btn" style="margin-top:20px;">Clear everything</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    &copy; Roshini Lidwin &amp; Tipper Truong - CS 4339.0W1 Assignment #3
+  </div>
+
+  <script>
+    document.getElementById("userId").textContent = getUserId();
+
+    document.addEventListener("DOMContentLoaded", function () {
+      renderCart();
+      renderBooked();
+    });
+
+    function money(n) { return "$" + n.toFixed(2); }
+
+    // ---- Flight ticket pricing: infant 10%, child 70%, adult full ----
+    function flightTotal(item) {
+      var a = item.adults, c = item.children, inf = item.infants, p = item.price;
+      return a * p + c * (p * 0.7) + inf * (p * 0.1);
+    }
+
+    function renderCart() {
+      var area = document.getElementById("cartArea");
+      area.innerHTML = "";
+      var cart = getCart();
+
+      if (cart.length === 0) {
+        area.innerHTML = "<p>Your cart is empty.</p>";
+        return;
+      }
+
+      cart.forEach(function (item, index) {
+        var div = document.createElement("div");
+        div.className = "cart-item";
+
+        if (item.type === "flight") {
+          div.appendChild(flightBlock(item, index));
+        } else if (item.type === "hotel") {
+          div.appendChild(hotelBlock(item, index));
+        } else if (item.type === "car") {
+          div.appendChild(carBlock(item, index));
+        }
+        area.appendChild(div);
+      });
+    }
+
+    // ---------- FLIGHT ----------
+    function flightBlock(item, index) {
+      var wrap = document.createElement("div");
+      var total = flightTotal(item);
+      var pax = item.adults + item.children + item.infants;
+
+      wrap.innerHTML =
+        "<h4>Flight (" + (item.role === "return" ? "Returning" : "Departing") + "): " + item.flightId + "</h4>" +
+        item.origin + " &rarr; " + item.destination + "<br>" +
+        "Depart " + item.departureDate + " " + item.departureTime +
+        ", Arrive " + item.arrivalDate + " " + item.arrivalTime + "<br>" +
+        "Adults: " + item.adults + " ($" + item.price + "), " +
+        "Children: " + item.children + " ($" + (item.price*0.7).toFixed(2) + "), " +
+        "Infants: " + item.infants + " ($" + (item.price*0.1).toFixed(2) + ")<br>" +
+        "<div class='totals'>Total ticket price: " + money(total) + "</div>";
+
+      // Passenger detail inputs (name, DOB, SSN) for each passenger.
+      var paxWrap = document.createElement("div");
+      paxWrap.innerHTML = "<em>Enter passenger details to book:</em>";
+      for (var i = 0; i < pax; i++) {
+        var row = document.createElement("div");
+        row.className = "pax-row";
+        row.innerHTML =
+          "<br>Passenger " + (i + 1) + ": " +
+          "<input placeholder='First name' id='fn_" + index + "_" + i + "'>" +
+          "<input placeholder='Last name' id='ln_" + index + "_" + i + "'>" +
+          "<input placeholder='DOB (YYYY-MM-DD)' id='dob_" + index + "_" + i + "'>" +
+          "<input placeholder='SSN' id='ssn_" + index + "_" + i + "'>";
+        paxWrap.appendChild(row);
+      }
+      wrap.appendChild(paxWrap);
+
+      var bookBtn = document.createElement("button");
+      bookBtn.textContent = "Book this flight";
+      bookBtn.onclick = function () { bookFlight(index, pax); };
+      wrap.appendChild(document.createElement("br"));
+      wrap.appendChild(bookBtn);
+
+      wrap.appendChild(removeBtn(index));
+      return wrap;
+    }
+
+    function bookFlight(index, pax) {
+      var cart = getCart();
+      var item = cart[index];
+      var passengers = [];
+
+      for (var i = 0; i < pax; i++) {
+        var fn = val("fn_" + index + "_" + i);
+        var ln = val("ln_" + index + "_" + i);
+        var dob = val("dob_" + index + "_" + i);
+        var ssn = val("ssn_" + index + "_" + i);
+        if (!fn || !ln || !dob || !ssn) {
+          alert("Please fill in first name, last name, DOB and SSN for every passenger.");
+          return;
+        }
+        passengers.push({ firstName: fn, lastName: ln, dob: dob, ssn: ssn });
+      }
+
+      var booking = {
+        type: "flight",
+        userId: getUserId(),
+        bookingNumber: newBookingNumber(),
+        flightId: item.flightId,
+        origin: item.origin,
+        destination: item.destination,
+        departureDate: item.departureDate,
+        arrivalDate: item.arrivalDate,
+        departureTime: item.departureTime,
+        arrivalTime: item.arrivalTime,
+        role: item.role,
+        totalPrice: flightTotal(item),
+        passengers: passengers
+      };
+      addBooking(booking);
+
+      // Update available seats in the "JSON file" (inventory override).
+      // The flight's original seat count was stored on the cart item.
+      var currentSeats = currentAvailability(item.flightId, item.defaultSeats);
+      setAvailability(item.flightId, Math.max(0, currentSeats - item.seatsNeeded));
+
+      // Remove from cart.
+      cart.splice(index, 1);
+      saveCart(cart);
+      alert("Flight booked! Booking number: " + booking.bookingNumber);
+      renderCart();
+      renderBooked();
+    }
+
+    // ---------- HOTEL ----------
+    function hotelBlock(item, index) {
+      var wrap = document.createElement("div");
+      wrap.innerHTML =
+        "<h4>Hotel: " + item.hotelId + " - " + item.hotelName + "</h4>" +
+        "City: " + item.city + "<br>" +
+        "Guests - Adults: " + item.adults + ", Children: " + item.children + ", Infants: " + item.infants + "<br>" +
+        "Check-in " + item.checkin + ", Check-out " + item.checkout + "<br>" +
+        "Rooms: " + item.rooms + " | Nights: " + item.nights + " | $" + item.pricePerNight + " / night per room<br>" +
+        "<div class='totals'>Total price: " + money(item.total) + "</div>";
+      var bookBtn = document.createElement("button");
+      bookBtn.textContent = "Book this hotel";
+      bookBtn.onclick = function () { bookHotel(index); };
+      wrap.appendChild(bookBtn);
+      wrap.appendChild(removeBtn(index));
+      return wrap;
+    }
+
+    function bookHotel(index) {
+      var cart = getCart();
+      var item = cart[index];
+      var booking = {
+        type: "hotel",
+        userId: getUserId(),
+        bookingNumber: newBookingNumber(),
+        hotelId: item.hotelId,
+        hotelName: item.hotelName,
+        city: item.city,
+        checkin: item.checkin,
+        checkout: item.checkout,
+        adults: item.adults, children: item.children, infants: item.infants,
+        rooms: item.rooms,
+        pricePerNight: item.pricePerNight,
+        total: item.total
+      };
+      addBooking(booking);
+
+      // Update available rooms in the "XML file" (inventory override).
+      var current = currentAvailability(item.hotelId, item.defaultRooms);
+      setAvailability(item.hotelId, Math.max(0, current - item.rooms));
+
+      cart.splice(index, 1);
+      saveCart(cart);
+      alert("Hotel booked! Booking number: " + booking.bookingNumber);
+      renderCart();
+      renderBooked();
+    }
+
+    // ---------- CAR ----------
+    function carBlock(item, index) {
+      var wrap = document.createElement("div");
+      wrap.innerHTML =
+        "<h4>Car: " + item.carId + " - " + item.carType + "</h4>" +
+        "City: " + item.city + "<br>" +
+        "Check-in " + item.checkin + ", Check-out " + item.checkout + " (" + item.days + " days)<br>" +
+        "$" + item.pricePerDay + " / day<br>" +
+        "<div class='totals'>Total price: " + money(item.total) + "</div>";
+      var bookBtn = document.createElement("button");
+      bookBtn.textContent = "Book this car";
+      bookBtn.onclick = function () { bookCar(index); };
+      wrap.appendChild(bookBtn);
+      wrap.appendChild(removeBtn(index));
+      return wrap;
+    }
+
+    function bookCar(index) {
+      var cart = getCart();
+      var item = cart[index];
+      var booking = {
+        type: "car",
+        userId: getUserId(),
+        bookingNumber: newBookingNumber(),
+        carId: item.carId,
+        city: item.city,
+        carType: item.carType,
+        checkin: item.checkin,
+        checkout: item.checkout,
+        days: item.days,
+        pricePerDay: item.pricePerDay,
+        total: item.total
+      };
+      addBooking(booking);
+
+      // Remember this car preference so the Cars page can suggest similar cars.
+      addCarHistory({ city: item.city, carType: item.carType });
+
+      cart.splice(index, 1);
+      saveCart(cart);
+      alert("Car booked! Booking number: " + booking.bookingNumber +
+            "\nWe'll suggest similar cars next time on the Cars page.");
+      renderCart();
+      renderBooked();
+    }
+
+    // ---------- Shared UI helpers ----------
+    function removeBtn(index) {
+      var btn = document.createElement("button");
+      btn.textContent = "Remove";
+      btn.className = "remove-btn";
+      btn.onclick = function () {
+        var cart = getCart();
+        cart.splice(index, 1);
+        saveCart(cart);
+        renderCart();
+      };
+      return btn;
+    }
+
+    function val(id) {
+      var el = document.getElementById(id);
+      return el ? el.value.trim() : "";
+    }
+
+    function renderBooked() {
+      var area = document.getElementById("bookedArea");
+      area.innerHTML = "";
+      var list = getBookings();
+      if (list.length === 0) {
+        area.innerHTML = "<p>No bookings yet.</p>";
+        return;
+      }
+      list.forEach(function (b) {
+        var div = document.createElement("div");
+        div.className = "cart-item booked";
+        var html = "<h4>" + b.type.toUpperCase() + " - Booking " + b.bookingNumber + "</h4>" +
+                   "User ID: " + b.userId + "<br>";
+
+        if (b.type === "flight") {
+          html += b.flightId + " | " + b.origin + " &rarr; " + b.destination + "<br>" +
+                  "Depart " + b.departureDate + " " + b.departureTime +
+                  ", Arrive " + b.arrivalDate + " " + b.arrivalTime + "<br>" +
+                  "<div class='totals'>Total: " + money(b.totalPrice) + "</div>" +
+                  "<em>Passengers:</em><br>";
+          b.passengers.forEach(function (p, i) {
+            html += (i+1) + ". " + p.firstName + " " + p.lastName +
+                    " | DOB " + p.dob + " | SSN " + p.ssn + "<br>";
+          });
+        } else if (b.type === "hotel") {
+          html += b.hotelId + " - " + b.hotelName + " (" + b.city + ")<br>" +
+                  "Check-in " + b.checkin + ", Check-out " + b.checkout + "<br>" +
+                  "Rooms: " + b.rooms + " | $" + b.pricePerNight + "/night<br>" +
+                  "<div class='totals'>Total: " + money(b.total) + "</div>";
+        } else if (b.type === "car") {
+          html += b.carId + " - " + b.carType + " (" + b.city + ")<br>" +
+                  "Check-in " + b.checkin + ", Check-out " + b.checkout + "<br>" +
+                  "<div class='totals'>Total: " + money(b.total) + "</div>";
+        }
+        div.innerHTML = html;
+        area.appendChild(div);
+      });
+    }
+
+    function downloadBookings() {
+      var list = getBookings();
+      if (list.length === 0) {
+        alert("No bookings to download yet.");
+        return;
+      }
+      downloadJSON("bookings.json", list);
+    }
+
+    function clearAll() {
+      if (confirm("Clear cart, bookings, and inventory changes?")) {
+        localStorage.removeItem("cart");
+        localStorage.removeItem("bookings");
+        localStorage.removeItem("inventory");
+        renderCart();
+        renderBooked();
+      }
+    }
+  </script>
+
+</body>
+</html>

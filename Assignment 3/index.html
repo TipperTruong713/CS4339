@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Deals - Home</title>
+  <link rel="stylesheet" href="mystyle.css">
+  <script src="script.js"></script>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Travel Deals</h1>
+    <div id="datetime"></div>
+  </div>
+
+  <div class="navbar">
+    <a href="stays.html">Stays</a>
+    <a href="flights.html">Flights</a>
+    <a href="cars.html">Cars</a>
+    <a href="cruises.html">Cruises</a>
+    <a href="cart.html">Cart</a>
+    <a href="contact-us.html">Contact Us</a>
+  </div>
+
+  <div class="container">
+    <div class="side">
+      <h3>Settings</h3>
+      <label>Font size</label>
+      <select id="fontSizeSelect" onchange="changeFontSize(this.value)">
+        <option value="16">Normal</option>
+        <option value="14">Small</option>
+        <option value="20">Large</option>
+        <option value="24">Extra Large</option>
+      </select>
+
+      <label>Background color</label>
+      <select id="bgColorSelect" onchange="changeBgColor(this.value)">
+        <option value="#ffffff">White</option>
+        <option value="#f0f8ff">Light Blue</option>
+        <option value="#fff8e7">Cream</option>
+        <option value="#eaffea">Light Green</option>
+      </select>
+    </div>
+
+    <div class="main">
+      <h2>Welcome to Travel Deals</h2>
+      <div class="main-inner">
+        <p>Find the best deals on flights, stays, cars, and cruises. Use the
+        navigation bar above to start planning your trip.</p>
+        <p>
+          <strong>Flights</strong> - search Texas &harr; California flights and book with passenger details.<br>
+          <strong>Stays</strong> - find hotels by city and reserve rooms.<br>
+          <strong>Cars</strong> - rent a car; we suggest cars based on your past bookings.<br>
+          <strong>Cruises</strong> - browse cruise destinations.<br>
+          <strong>Cart</strong> - review and book everything you selected.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    &copy; Roshini Lidwin &amp; Tipper Truong - CS 4339.0W1 Assignment #3
+  </div>
+
+</body>
+</html>

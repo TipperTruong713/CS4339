@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Deals - Flights</title>
+  <link rel="stylesheet" href="mystyle.css">
+  <script src="script.js"></script>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Travel Deals</h1>
+    <div id="datetime"></div>
+  </div>
+
+  <div class="navbar">
+    <a href="stays.html">Stays</a>
+    <a href="flights.html">Flights</a>
+    <a href="cars.html">Cars</a>
+    <a href="cruises.html">Cruises</a>
+    <a href="cart.html">Cart</a>
+    <a href="contact-us.html">Contact Us</a>
+  </div>
+
+  <div class="container">
+    <div class="side">
+      <h3>Settings</h3>
+      <label>Font size</label>
+      <select id="fontSizeSelect" onchange="changeFontSize(this.value)">
+        <option value="16">Normal</option>
+        <option value="14">Small</option>
+        <option value="20">Large</option>
+        <option value="24">Extra Large</option>
+      </select>
+
+      <label>Background color</label>
+      <select id="bgColorSelect" onchange="changeBgColor(this.value)">
+        <option value="#ffffff">White</option>
+        <option value="#f0f8ff">Light Blue</option>
+        <option value="#fff8e7">Cream</option>
+        <option value="#eaffea">Light Green</option>
+      </select>
+    </div>
+
+    <div class="main">
+      <h2>Search Flights</h2>
+
+      <label>Trip type</label>
+      <div class="radio-line">
+        <input type="radio" name="trip" value="One Way" onclick="showTripFields()"> <label>One Way</label>
+        <input type="radio" name="trip" value="Round Trip" onclick="showTripFields()"> <label>Round Trip</label>
+      </div>
+
+      <label>Origin</label>
+      <input type="text" id="origin" placeholder="City in Texas or California">
+
+      <label>Destination</label>
+      <input type="text" id="destination" placeholder="City in Texas or California">
+
+      <label>Departure date</label>
+      <input type="date" id="departure">
+
+      <div id="returnBox" style="display:none;">
+        <label>Return date</label>
+        <input type="date" id="returnDate">
+      </div>
+
+      <button type="button" onclick="togglePassengers()">&#128100; Passengers</button>
+
+      <div class="popup" id="passengerBox">
+        <label>Adults</label>
+        <input type="number" id="adults" value="0" min="0">
+
+        <label>Children</label>
+        <input type="number" id="children" value="0" min="0">
+
+        <label>Infants</label>
+        <input type="number" id="infants" value="0" min="0">
+      </div>
+
+      <button onclick="searchFlights()">Search</button>
+
+      <div class="result" id="result"></div>
+      <div class="result" id="departResults"></div>
+      <div class="result" id="returnResults"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    &copy; Roshini Lidwin &amp; Tipper Truong - CS 4339.0W1 Assignment #3
+  </div>
+
+  <script>
+    // Cities in Texas or California (regular expression validation)
+    var cityPattern = /^(Dallas|Austin|Houston|San Antonio|Fort Worth|Los Angeles|San Diego|San Francisco|San Jose|Sacramento)$/i;
+    var datePattern = /^2024-(09|10|11|12)-\d{2}$/;
+    var passengerPattern = /^[0-4]$/;
+
+    var allFlights = [];       // loaded from flights.json
+    var lastSearch = null;     // remembers passenger counts + trip type
+
+    // Load the available flights JSON when the page opens.
+    document.addEventListener("DOMContentLoaded", function () {
+      fetch("flights.json")
+        .then(function (r) { return r.json(); })
+        .then(function (data) { allFlights = data.flights; })
+        .catch(function () {
+          alert("Could not load flights.json. Make sure it is in the same folder.");
+        });
+    });
+
+    function getTripType() {
+      var trips = document.getElementsByName("trip");
+      for (var i = 0; i < trips.length; i++) {
+        if (trips[i].checked) return trips[i].value;
+      }
+      return "";
+    }
+
+    function showTripFields() {
+      document.getElementById("returnBox").style.display =
+        (getTripType() === "Round Trip") ? "block" : "none";
+    }
+
+    function togglePassengers() {
+      var box = document.getElementById("passengerBox");
+      box.style.display = (box.style.display === "block") ? "none" : "block";
+    }
+
+    function isDateInRange(dateStr) {
+      if (!datePattern.test(dateStr)) return false;
+      return dateStr >= "2024-09-01" && dateStr <= "2024-12-01";
+    }
+
+    // days difference between two YYYY-MM-DD dates
+    function dayDiff(a, b) {
+      return Math.round((new Date(a) - new Date(b)) / 86400000);
+    }
+
+    // Find flights for a route. Prefer exact date; if none, widen to +/- 3 days.
+    function findFlights(origin, dest, date, seatsNeeded) {
+      var exact = allFlights.filter(function (f) {
+        return f.origin.toLowerCase() === origin.toLowerCase() &&
+               f.destination.toLowerCase() === dest.toLowerCase() &&
+               f.departureDate === date &&
+               currentAvailability(f.flightId, f.availableSeats) >= seatsNeeded;
+      });
+      if (exact.length > 0) return { flights: exact, widened: false };
+
+      var near = allFlights.filter(function (f) {
+        return f.origin.toLowerCase() === origin.toLowerCase() &&
+               f.destination.toLowerCase() === dest.toLowerCase() &&
+               Math.abs(dayDiff(f.departureDate, date)) <= 3 &&
+               currentAvailability(f.flightId, f.availableSeats) >= seatsNeeded;
+      });
+      return { flights: near, widened: true };
+    }
+
+    function searchFlights() {
+      var trip = getTripType();
+      var origin = document.getElementById("origin").value.trim();
+      var destination = document.getElementById("destination").value.trim();
+      var departure = document.getElementById("departure").value;
+      var returnDate = document.getElementById("returnDate").value;
+      var adults = parseInt(document.getElementById("adults").value) || 0;
+      var children = parseInt(document.getElementById("children").value) || 0;
+      var infants = parseInt(document.getElementById("infants").value) || 0;
+
+      // ---- Validation ----
+      if (trip === "") { alert("Please choose one way or round trip."); return; }
+      if (!cityPattern.test(origin)) { alert("Origin must be a city in Texas or California."); return; }
+      if (!cityPattern.test(destination)) { alert("Destination must be a city in Texas or California."); return; }
+      if (origin.toLowerCase() === destination.toLowerCase()) { alert("Origin and destination cannot be the same."); return; }
+      if (!isDateInRange(departure)) { alert("Departure date must be between Sep 1, 2024 and Dec 1, 2024."); return; }
+      if (trip === "Round Trip") {
+        if (!isDateInRange(returnDate)) { alert("Return date must be between Sep 1, 2024 and Dec 1, 2024."); return; }
+        if (new Date(returnDate) <= new Date(departure)) { alert("Return date must be after departure date."); return; }
+      }
+      if (!passengerPattern.test(String(adults)) || !passengerPattern.test(String(children)) || !passengerPattern.test(String(infants))) {
+        alert("Number of passengers for each category cannot be more than 4."); return;
+      }
+      if (adults + children + infants === 0) { alert("Please enter at least one passenger."); return; }
+
+      // Remember the search so the cart can compute pricing.
+      lastSearch = { trip: trip, adults: adults, children: children, infants: infants,
+                     origin: origin, destination: destination };
+      var seatsNeeded = adults + children + infants;
+
+      // ---- Echo the entered information ----
+      var info =
+        "<strong>Your Flight Search</strong><br>" +
+        "Trip type: " + trip + "<br>" +
+        "Origin: " + origin + "<br>" +
+        "Destination: " + destination + "<br>" +
+        "Departure date: " + departure + "<br>";
+      if (trip === "Round Trip") info += "Return date: " + returnDate + "<br>";
+      info += "Adults: " + adults + ", Children: " + children + ", Infants: " + infants +
+              " (seats needed: " + seatsNeeded + ")";
+      var res = document.getElementById("result");
+      res.style.display = "block";
+      res.innerHTML = info;
+
+      // ---- Departing flights ----
+      var dep = findFlights(origin, destination, departure, seatsNeeded);
+      renderFlightList("departResults", "Departing flights", dep, departure, "depart");
+
+      // ---- Returning flights (round trip only) ----
+      var ret = document.getElementById("returnResults");
+      if (trip === "Round Trip") {
+        var r = findFlights(destination, origin, returnDate, seatsNeeded);
+        renderFlightList("returnResults", "Returning flights", r, returnDate, "return");
+      } else {
+        ret.style.display = "none";
+        ret.innerHTML = "";
+      }
+    }
+
+    function renderFlightList(containerId, title, result, reqDate, kind) {
+      var box = document.getElementById(containerId);
+      box.style.display = "block";
+      box.innerHTML = "";
+
+      var h = document.createElement("strong");
+      h.textContent = title;
+      box.appendChild(h);
+      box.appendChild(document.createElement("br"));
+
+      if (result.flights.length === 0) {
+        box.appendChild(document.createTextNode("No available flights within 3 days of " + reqDate + "."));
+        return;
+      }
+      if (result.widened) {
+        var note = document.createElement("em");
+        note.textContent = "No flights on " + reqDate + " with enough seats; showing flights within 3 days.";
+        box.appendChild(note);
+        box.appendChild(document.createElement("br"));
+      }
+
+      result.flights.forEach(function (f) {
+        var seats = currentAvailability(f.flightId, f.availableSeats);
+        var line = document.createElement("div");
+        line.style.margin = "8px 0";
+        line.style.borderBottom = "1px solid #ccc";
+        line.style.paddingBottom = "6px";
+        line.innerHTML =
+          f.flightId + " | " + f.origin + " &rarr; " + f.destination + "<br>" +
+          "Depart " + f.departureDate + " " + f.departureTime +
+          ", Arrive " + f.arrivalDate + " " + f.arrivalTime + "<br>" +
+          "Seats: " + seats + " | $" + f.price + " / adult ";
+        var btn = document.createElement("button");
+        btn.textContent = "Add to cart";
+        btn.onclick = function () { addFlightToCart(f, kind); };
+        line.appendChild(btn);
+        box.appendChild(line);
+      });
+    }
+
+    function addFlightToCart(f, kind) {
+      if (!lastSearch) { alert("Please search first."); return; }
+      var seatsNeeded = lastSearch.adults + lastSearch.children + lastSearch.infants;
+      addToCart({
+        type: "flight",
+        role: kind, // "depart" or "return"
+        flightId: f.flightId,
+        origin: f.origin,
+        destination: f.destination,
+        departureDate: f.departureDate,
+        arrivalDate: f.arrivalDate,
+        departureTime: f.departureTime,
+        arrivalTime: f.arrivalTime,
+        price: f.price,
+        defaultSeats: f.availableSeats,
+        adults: lastSearch.adults,
+        children: lastSearch.children,
+        infants: lastSearch.infants,
+        seatsNeeded: seatsNeeded
+      });
+      alert("Flight " + f.flightId + " added to cart.");
+    }
+  </script>
+
+</body>
+</html>
