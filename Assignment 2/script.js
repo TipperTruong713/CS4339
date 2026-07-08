@@ -1,5 +1,3 @@
-// common.js - shared features for all pages
-
 // Display current local date and time
 function showDateTime() {
   var el = document.getElementById("datetime");

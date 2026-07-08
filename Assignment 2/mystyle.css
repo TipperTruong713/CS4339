@@ -73,9 +73,12 @@ body {
 .main {
   flex: 1;
   padding: 20px;
+  text-align: center;
+}
+
+.main-inner {
   max-width: 500px;
   margin: 0 auto;
-  text-align: center;
 }
 
 /* Footer */
