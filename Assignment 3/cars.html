@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Deals - Cars</title>
+  <link rel="stylesheet" href="mystyle.css">
+  <script src="script.js"></script>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Travel Deals</h1>
+    <div id="datetime"></div>
+  </div>
+
+  <div class="navbar">
+    <a href="stays.html">Stays</a>
+    <a href="cars.html">Cars</a>
+    <a href="cruises.html">Cruises</a>
+    <a href="book-flight.html">Book</a>
+    <a href="contact-us.html">Contact Us</a>
+  </div>
+
+  <div class="container">
+    <div class="side">
+      <h3>Settings</h3>
+      <label>Font size</label>
+      <select id="fontSizeSelect" onchange="changeFontSize(this.value)">
+        <option value="16">Normal</option>
+        <option value="14">Small</option>
+        <option value="20">Large</option>
+        <option value="24">Extra Large</option>
+      </select>
+
+      <label>Background color</label>
+      <select id="bgColorSelect" onchange="changeBgColor(this.value)">
+        <option value="#ffffff">White</option>
+        <option value="#f0f8ff">Light Blue</option>
+        <option value="#fff8e7">Cream</option>
+        <option value="#eaffea">Light Green</option>
+      </select>
+    </div>
+
+    <div class="main">
+      <h2>Rent a Car</h2>
+
+      <label>City</label>
+      <input type="text" id="city" placeholder="e.g. Austin">
+
+      <label>Type of car</label>
+      <select id="cartype">
+        <option value="">-- Select --</option>
+        <option value="Economy">Economy</option>
+        <option value="SUV">SUV</option>
+        <option value="Compact">Compact</option>
+        <option value="Midsize">Midsize</option>
+      </select>
+
+      <label>Check-in date</label>
+      <input type="date" id="checkin">
+
+      <label>Check-out date</label>
+      <input type="date" id="checkout">
+
+      <button onclick="searchCars()">Submit</button>
+
+      <div class="result" id="result"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    &copy; Roshini Lidwin & Tipper Truong - CS 4339.0W1 Assignment #2
+  </div>
+
+  <script>
+    // This page uses DOM methods (getElementById, createElement, appendChild)
+    var allowedTypes = ["Economy", "SUV", "Compact", "Midsize"];
+
+    function isDateInRange(dateStr) {
+      if (!dateStr) return false;
+      return dateStr >= "2024-09-01" && dateStr <= "2024-12-01";
+    }
+
+    function searchCars() {
+      var city = document.getElementById("city").value;
+      var cartype = document.getElementById("cartype").value;
+      var checkin = document.getElementById("checkin").value;
+      var checkout = document.getElementById("checkout").value;
+
+      if (city.trim() === "") {
+        alert("Please enter a city.");
+        return;
+      }
+      if (allowedTypes.indexOf(cartype) === -1) {
+        alert("Car type must be Economy, SUV, Compact or Midsize.");
+        return;
+      }
+      if (!isDateInRange(checkin) || !isDateInRange(checkout)) {
+        alert("Check-in and check-out dates must be between Sep 1, 2024 and Dec 1, 2024.");
+        return;
+      }
+      if (new Date(checkout) <= new Date(checkin)) {
+        alert("Check-out date must be after check-in date.");
+        return;
+      }
+
+      // Build result using DOM methods
+      var out = document.getElementById("result");
+      out.innerHTML = ""; // clear
+      out.style.display = "block";
+
+      var title = document.createElement("strong");
+      title.textContent = "Your Car Rental";
+      out.appendChild(title);
+      out.appendChild(document.createElement("br"));
+
+      var lines = [
+        "City: " + city,
+        "Car type: " + cartype,
+        "Check-in: " + checkin,
+        "Check-out: " + checkout
+      ];
+
+      for (var i = 0; i < lines.length; i++) {
+        var node = document.createTextNode(lines[i]);
+        out.appendChild(node);
+        out.appendChild(document.createElement("br"));
+      }
+    }
+  </script>
+
+</body>
+</html>
